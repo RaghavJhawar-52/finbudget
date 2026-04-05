@@ -1,0 +1,30 @@
+import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { DEFAULT_CATEGORIES } from "@/lib/categorizer";
+
+// POST /api/guest — create a fresh guest account and return credentials for auto sign-in
+export async function POST() {
+  try {
+    const uid      = crypto.randomUUID().slice(0, 8);
+    const email    = `guest-${uid}@finbudget.app`;
+    const password = crypto.randomUUID(); // random, never shown to user
+    const hashed   = await bcrypt.hash(password, 12);
+
+    await prisma.user.create({
+      data: {
+        name: "Guest",
+        email,
+        password: hashed,
+        categories: {
+          create: DEFAULT_CATEGORIES.map((cat) => ({ ...cat, isDefault: true })),
+        },
+      },
+    });
+
+    // Return plain-text password so the client can call signIn immediately
+    return NextResponse.json({ email, password }, { status: 201 });
+  } catch {
+    return NextResponse.json({ error: "Failed to create guest session" }, { status: 500 });
+  }
+}

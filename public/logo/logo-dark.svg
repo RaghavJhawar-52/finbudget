@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 72" fill="none">
+  <!-- Dark background for preview -->
+  <rect width="300" height="72" fill="#0f172a" rx="12"/>
+
+  <defs>
+    <linearGradient id="bgDark" x1="0" y1="0" x2="72" y2="72" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Icon mark ── -->
+  <rect x="8" y="4" width="64" height="64" rx="15" fill="url(#bgDark)"/>
+  <rect x="8" y="4" width="64" height="29" rx="15" fill="white" opacity="0.06"/>
+
+  <!-- Bars -->
+  <rect x="17" y="44" width="11" height="18" rx="3" fill="white" opacity="0.35"/>
+  <rect x="38" y="32" width="11" height="30" rx="3" fill="white" opacity="0.60"/>
+  <rect x="59" y="17" width="11" height="45" rx="3" fill="white" opacity="0.95"/>
+
+  <!-- Trend line -->
+  <path d="M 22.5 41 C 31 32, 47 24, 64.5 14"
+        stroke="white" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
+  <path d="M 59 12 L 65 14 L 63 20"
+        stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <circle cx="22.5" cy="41" r="2.5" fill="white" opacity="0.9"/>
+  <circle cx="43.5" cy="28" r="2.5" fill="white" opacity="0.9"/>
+  <circle cx="64.5" cy="14" r="3"   fill="white"/>
+
+  <!-- ── Wordmark (light for dark bg) ── -->
+  <text x="88" y="36"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-size="28" font-weight="300" letter-spacing="-1"
+    fill="#a5b4fc">Fin</text>
+
+  <text x="123" y="36"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-size="28" font-weight="700" letter-spacing="-1"
+    fill="#e0e7ff">Budget</text>
+
+  <text x="89" y="55"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-size="10" font-weight="400" letter-spacing="2.5"
+    fill="#475569">PERSONAL FINANCE</text>
+</svg>

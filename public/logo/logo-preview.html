@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FinBudget — Logo Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      padding: 40px 24px;
+      min-height: 100vh;
+    }
+    h1 { font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #94a3b8; margin-bottom: 40px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      border: 1px solid #f1f5f9;
+    }
+    .card.dark {
+      background: #0f172a;
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .card.dark .card-label { color: #475569; }
+    img, svg { max-width: 100%; height: auto; }
+    .icon-row { display: flex; gap: 16px; align-items: center; }
+    .icon-sm  { width: 40px;  height: 40px; }
+    .icon-md  { width: 64px;  height: 64px; }
+    .icon-lg  { width: 96px;  height: 96px; }
+    .icon-xl  { width: 128px; height: 128px; }
+    .size-label { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 4px; }
+    .sizes-grid { display: flex; gap: 24px; align-items: flex-end; }
+    .size-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    hr { width: 100%; border: none; border-top: 1px solid #f1f5f9; }
+    .palette { display: flex; gap: 12px; }
+    .swatch { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+    .swatch-label { font-size: 10px; color: #94a3b8; text-align: center; margin-top: 4px; }
+    .swatch-col { display: flex; flex-direction: column; align-items: center; }
+    .hex { font-family: monospace; font-size: 9px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <h1>FinBudget — Brand Logo Kit</h1>
+
+  <div class="grid">
+
+    <!-- Horizontal logo (light) -->
+    <div class="card">
+      <span class="card-label">Primary — Light</span>
+      <img src="logo-horizontal.svg" alt="FinBudget horizontal logo" style="width:260px"/>
+    </div>
+
+    <!-- Horizontal logo (dark) -->
+    <div class="card dark">
+      <span class="card-label">Primary — Dark</span>
+      <img src="logo-dark.svg" alt="FinBudget dark logo" style="width:260px; border-radius:8px;"/>
+    </div>
+
+    <!-- Stacked logo -->
+    <div class="card">
+      <span class="card-label">Stacked / Square</span>
+      <img src="logo-stacked.svg" alt="FinBudget stacked logo" style="width:120px"/>
+    </div>
+
+    <!-- Icon sizes -->
+    <div class="card">
+      <span class="card-label">Icon Mark — All Sizes</span>
+      <div class="sizes-grid">
+        <div class="size-col">
+          <img src="icon.svg" class="icon-sm" alt=""/>
+          <span class="size-label">40px</span>
+        </div>
+        <div class="size-col">
+          <img src="icon.svg" class="icon-md" alt=""/>
+          <span class="size-label">64px</span>
+        </div>
+        <div class="size-col">
+          <img src="icon.svg" class="icon-lg" alt=""/>
+          <span class="size-label">96px</span>
+        </div>
+        <div class="size-col">
+          <img src="icon.svg" class="icon-xl" alt=""/>
+          <span class="size-label">128px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color palette -->
+    <div class="card">
+      <span class="card-label">Brand Colors</span>
+      <div class="palette">
+        <div class="swatch-col">
+          <div class="swatch" style="background:#6366f1;"></div>
+          <span class="swatch-label">Primary<br/><span class="hex">#6366f1</span></span>
+        </div>
+        <div class="swatch-col">
+          <div class="swatch" style="background:#4338ca;"></div>
+          <span class="swatch-label">Deep<br/><span class="hex">#4338ca</span></span>
+        </div>
+        <div class="swatch-col">
+          <div class="swatch" style="background:#818cf8;"></div>
+          <span class="swatch-label">Light<br/><span class="hex">#818cf8</span></span>
+        </div>
+        <div class="swatch-col">
+          <div class="swatch" style="background:#312e81;"></div>
+          <span class="swatch-label">Dark<br/><span class="hex">#312e81</span></span>
+        </div>
+        <div class="swatch-col">
+          <div class="swatch" style="background:#e0e7ff; border:1px solid #e2e8f0;"></div>
+          <span class="swatch-label">Tint<br/><span class="hex">#e0e7ff</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typography -->
+    <div class="card">
+      <span class="card-label">Brand Typography</span>
+      <div style="text-align:center; line-height:1.6;">
+        <p style="font-size:32px; font-weight:300; color:#6366f1; letter-spacing:-1px;">Fin<span style="font-weight:700; color:#312e81;">Budget</span></p>
+        <p style="font-size:11px; letter-spacing:3px; color:#a5b4fc; margin-top:4px;">PERSONAL FINANCE</p>
+        <hr style="margin:16px 0; border-color:#f1f5f9;"/>
+        <p style="font-size:12px; color:#94a3b8;">Wordmark: <strong>Inter</strong> — Light 300 + Bold 700</p>
+        <p style="font-size:12px; color:#94a3b8; margin-top:4px;">Tagline: Inter 400, 2.5px letter-spacing</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

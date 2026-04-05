@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#6366f1"/>
+  <!-- Trending-up chart icon (matches app's logo) -->
+  <polyline
+    points="88,370 188,250 296,290 424,130"
+    fill="none" stroke="white" stroke-width="44"
+    stroke-linecap="round" stroke-linejoin="round"
+  />
+  <!-- Arrow tip -->
+  <polyline
+    points="352,108 424,130 402,202"
+    fill="none" stroke="white" stroke-width="44"
+    stroke-linecap="round" stroke-linejoin="round"
+  />
+  <!-- Small circle dots on line -->
+  <circle cx="188" cy="250" r="20" fill="white"/>
+  <circle cx="296" cy="290" r="20" fill="white"/>
+</svg>

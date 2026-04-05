@@ -12,7 +12,7 @@ export interface CategoryDefinition {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DEFAULT CATEGORIES  (25 total — 18 expense + 6 income + 1 catch-all)
+// DEFAULT CATEGORIES  (26 total — 19 expense + 6 income + 1 catch-all)
 // ─────────────────────────────────────────────────────────────────────────────
 export const DEFAULT_CATEGORIES: CategoryDefinition[] = [
 
@@ -29,10 +29,32 @@ export const DEFAULT_CATEGORIES: CategoryDefinition[] = [
       "food", "dining", "eatery", "canteen", "dhaba", "biryani",
       "thali", "mess", "tiffin", "lunch", "dinner", "breakfast",
       "snack", "bakery", "sweet shop", "halwai", "juice bar",
-      "grocery", "bigbasket", "blinkit", "zepto", "instamart",
-      "dmart", "reliance fresh", "more supermarket", "nature basket",
-      "daily basket", "super daily", "spencers", "star bazaar",
       "food court", "cloud kitchen", "meal delivery",
+    ],
+  },
+
+  {
+    name: "Groceries",
+    icon: "shopping-cart",
+    color: "#16a34a",
+    keywords: [
+      // Online grocery platforms
+      "bigbasket", "blinkit", "zepto", "instamart", "swiggy instamart",
+      "jiomart grocery", "grofers", "milkbasket", "dunzo grocery",
+      // Supermarkets & retail chains
+      "dmart", "reliance fresh", "more supermarket", "nature basket",
+      "star bazaar", "spencers", "easy day", "big bazaar grocery",
+      "lulu hypermarket", "metro cash",
+      // Specialty & farm-fresh
+      "handpickd", "country delight", "sid farm", "fresh to home",
+      "licious", "tender cuts", "nandu's chicken", "zappfresh",
+      "farmley", "the organic world", "organic india", "nature's basket",
+      "daily harvest", "milky mist", "amul",
+      // General grocery keywords
+      "grocery", "groceries", "supermarket", "hypermarket", "kirana",
+      "provision store", "fruits vegetables", "sabzi", "sabziwala",
+      "weekly groceries", "monthly groceries", "vegetable",
+      "dairy", "milk", "eggs", "bread", "rice", "pulses", "atta",
     ],
   },
 

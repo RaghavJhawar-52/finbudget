@@ -117,10 +117,11 @@ async function main() {
 
       // Food
       { amount: 2800,  description: "Zomato orders",                    cat: "Food & Dining",        day: 6  },
-      { amount: 1600,  description: "Swiggy Instamart",                 cat: "Food & Dining",        day: 9  },
-      { amount: 1950,  description: "BigBasket monthly groceries",      cat: "Food & Dining",        day: 16 },
       { amount: 680,   description: "Starbucks — team lunch",           cat: "Food & Dining",        day: 22 },
       { amount: 450,   description: "Chai Point office orders",         cat: "Food & Dining",        day: 11 },
+      { amount: 1600,  description: "Swiggy Instamart",                 cat: "Groceries",            day: 9  },
+      { amount: 1950,  description: "BigBasket monthly groceries",      cat: "Groceries",            day: 16 },
+      { amount: 850,   description: "Country Delight — milk & dairy",   cat: "Groceries",            day: 3, recurring: true },
 
       // Transport
       { amount: 1800,  description: "Uber rides",                       cat: "Transport",            day: 10 },
@@ -209,7 +210,8 @@ async function main() {
   const currentYear  = now.getFullYear();
 
   const budgets = [
-    { cat: "Food & Dining",      amount: 9000  },
+    { cat: "Food & Dining",      amount: 5000  },
+    { cat: "Groceries",          amount: 6000  },
     { cat: "Transport",          amount: 5000  },
     { cat: "Shopping",           amount: 5000  },
     { cat: "Clothing & Apparel", amount: 4000  },

@@ -77,11 +77,13 @@ function CategoryForm({ cat, onSuccess, onCancel }: { cat?: Category | null; onS
 
 // ---- Main settings page ----
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCatForm, setShowCatForm] = useState(false);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState("");
   const [profileName, setProfileName] = useState(session?.user?.name ?? "");
 
   useEffect(() => {
@@ -125,12 +127,31 @@ export default function SettingsPage() {
               onChange={(e) => setProfileName(e.target.value)}
             />
           </div>
+          {profileError && (
+            <p className="text-sm text-red-500">{profileError}</p>
+          )}
           <Button
             size="sm"
+            loading={profileSaving}
             onClick={async () => {
-              // Note: updating name would require a PATCH /api/profile endpoint
-              setProfileSaved(true);
-              setTimeout(() => setProfileSaved(false), 2000);
+              setProfileSaving(true);
+              setProfileError("");
+              try {
+                const res = await fetch("/api/profile", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name: profileName }),
+                });
+                if (!res.ok) throw new Error("Failed to save");
+                // Refresh the JWT so the new name shows in the session
+                await updateSession({ name: profileName });
+                setProfileSaved(true);
+                setTimeout(() => setProfileSaved(false), 2500);
+              } catch {
+                setProfileError("Could not save changes. Please try again.");
+              } finally {
+                setProfileSaving(false);
+              }
             }}
           >
             <Save className="w-4 h-4" />

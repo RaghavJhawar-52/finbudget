@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [data, setData]         = useState<DashboardData | null>(null);
   const [budgets, setBudgets]   = useState<(Budget & { spent: number })[]>([]);
   const [loading, setLoading]   = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [showAddTxn, setShowAddTxn] = useState(false);
 
   // Recurring status banner
@@ -31,15 +32,23 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [insightsRes, budgetsRes] = await Promise.all([
-      fetch("/api/insights"),
-      fetch(`/api/budgets?month=${new Date().getMonth() + 1}&year=${new Date().getFullYear()}`),
-    ]);
-    const insightsData = await insightsRes.json();
-    const budgetsData  = await budgetsRes.json();
-    setData(insightsData);
-    setBudgets(budgetsData);
-    setLoading(false);
+    setFetchError(false);
+    try {
+      const now = new Date();
+      const [insightsRes, budgetsRes] = await Promise.all([
+        fetch("/api/insights"),
+        fetch(`/api/budgets?month=${now.getMonth() + 1}&year=${now.getFullYear()}`),
+      ]);
+      if (!insightsRes.ok) throw new Error("insights");
+      const insightsData = await insightsRes.json();
+      const budgetsData  = budgetsRes.ok ? await budgetsRes.json() : [];
+      setData(insightsData);
+      setBudgets(Array.isArray(budgetsData) ? budgetsData : []);
+    } catch {
+      setFetchError(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -60,7 +69,15 @@ export default function DashboardPage() {
   }, []);
 
   if (loading) return <DashboardSkeleton />;
-  if (!data)   return null;
+  if (fetchError) return (
+    <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <p className="text-gray-500 dark:text-gray-400">Failed to load dashboard data.</p>
+      <Button variant="secondary" size="sm" onClick={fetchData}>
+        <RefreshCw className="w-4 h-4" /> Retry
+      </Button>
+    </div>
+  );
+  if (!data) return null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">

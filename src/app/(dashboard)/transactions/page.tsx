@@ -24,11 +24,18 @@ export default function TransactionsPage() {
   const { toasts, toast, removeToast }  = useToast();
 
   // Filters
+  const [searchInput, setSearchInput] = useState(""); // raw input — debounced below
   const [search, setSearch]     = useState("");
   const [type, setType]         = useState("");
   const [category, setCategory] = useState("");
   const [from, setFrom]         = useState("");
   const [to, setTo]             = useState("");
+
+  // Debounce search: only trigger fetch 350 ms after the user stops typing
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -53,10 +60,10 @@ export default function TransactionsPage() {
   }, []);
 
   const clearFilters = () => {
-    setSearch(""); setType(""); setCategory(""); setFrom(""); setTo("");
+    setSearchInput(""); setSearch(""); setType(""); setCategory(""); setFrom(""); setTo("");
   };
 
-  const hasFilters = search || type || category || from || to;
+  const hasFilters = searchInput || search || type || category || from || to;
 
   const handleExport = async () => {
     setExporting(true);
@@ -121,8 +128,8 @@ export default function TransactionsPage() {
               type="text"
               className="input-base pl-9"
               placeholder="Search transactions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
 

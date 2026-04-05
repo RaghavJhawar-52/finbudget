@@ -131,16 +131,24 @@ function TransactionRow({
 
 // ─── Main component ────────────────────────────────────────────────────────────
 export function TransactionList({ transactions, onRefresh, currency = "INR" }: Props) {
-  const [editing, setEditing]   = useState<Transaction | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [editing, setEditing]     = useState<Transaction | null>(null);
+  const [deleting, setDeleting]   = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!confirm("Delete this transaction?")) return;
       setDeleting(id);
-      await fetch(`/api/transactions/${id}`, { method: "DELETE" });
-      setDeleting(null);
-      onRefresh();
+      setDeleteError(null);
+      try {
+        const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("Delete failed");
+        onRefresh();
+      } catch {
+        setDeleteError("Could not delete transaction. Please try again.");
+      } finally {
+        setDeleting(null);
+      }
     },
     [onRefresh]
   );
@@ -159,6 +167,12 @@ export function TransactionList({ transactions, onRefresh, currency = "INR" }: P
 
   return (
     <>
+      {deleteError && (
+        <div className="mb-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400 flex items-center justify-between">
+          {deleteError}
+          <button onClick={() => setDeleteError(null)} className="ml-2 text-red-400 hover:text-red-600">✕</button>
+        </div>
+      )}
       <div className="space-y-1">
         {groups.map(([label, txns]) => {
           // Daily total for the group

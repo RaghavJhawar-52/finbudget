@@ -17,6 +17,7 @@ function GoalForm({
   goal, onSuccess, onCancel,
 }: { goal?: Goal | null; onSuccess: () => void; onCancel: () => void }) {
   const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState("");
   const [form, setForm] = useState({
     name: goal?.name ?? "",
     targetAmount: goal?.targetAmount?.toString() ?? "",
@@ -27,16 +28,35 @@ function GoalForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    const target  = parseFloat(form.targetAmount);
+    const current = parseFloat(form.currentAmount || "0");
+    if (current > target) {
+      setError("Saved amount cannot exceed the target amount.");
+      return;
+    }
+
     setLoading(true);
-    const url    = goal ? `/api/goals/${goal.id}` : "/api/goals";
-    const method = goal ? "PUT" : "POST";
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, targetAmount: parseFloat(form.targetAmount), currentAmount: parseFloat(form.currentAmount) }),
-    });
-    setLoading(false);
-    onSuccess();
+    try {
+      const url    = goal ? `/api/goals/${goal.id}` : "/api/goals";
+      const method = goal ? "PUT" : "POST";
+      const res    = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, targetAmount: target, currentAmount: current }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Failed to save goal. Please try again.");
+        return;
+      }
+      onSuccess();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -73,6 +93,9 @@ function GoalForm({
           ))}
         </div>
       </div>
+      {error && (
+        <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-3 py-2">{error}</p>
+      )}
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>Cancel</Button>
         <Button type="submit" loading={loading} className="flex-1">{goal ? "Update Goal" : "Create Goal"}</Button>
@@ -89,9 +112,15 @@ export default function GoalsPage() {
 
   const fetchGoals = async () => {
     setLoading(true);
-    const res = await fetch("/api/goals");
-    setGoals(await res.json());
-    setLoading(false);
+    try {
+      const res  = await fetch("/api/goals");
+      const data = await res.json();
+      setGoals(Array.isArray(data) ? data : []);
+    } catch {
+      setGoals([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchGoals(); }, []);

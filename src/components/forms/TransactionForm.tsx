@@ -30,6 +30,7 @@ function isIncomeCategory(name: string) {
 export function TransactionForm({ transaction, onSuccess, onCancel }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState("");
   const [autoCatSuggestion, setAutoCatSuggestion] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -87,23 +88,40 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    const amount = parseFloat(form.amount);
+    if (!amount || amount <= 0) {
+      setError("Amount must be greater than zero.");
+      return;
+    }
+
     setLoading(true);
+    try {
+      const url    = transaction ? `/api/transactions/${transaction.id}` : "/api/transactions";
+      const method = transaction ? "PUT" : "POST";
 
-    const url    = transaction ? `/api/transactions/${transaction.id}` : "/api/transactions";
-    const method = transaction ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          amount,
+          categoryId: form.categoryId || null,
+        }),
+      });
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        amount: parseFloat(form.amount),
-        categoryId: form.categoryId || null,
-      }),
-    });
-
-    setLoading(false);
-    if (res.ok) onSuccess();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Failed to save transaction. Please try again.");
+        return;
+      }
+      onSuccess();
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const suggestedCat = autoCatSuggestion
@@ -242,6 +260,11 @@ export function TransactionForm({ transaction, onSuccess, onCancel }: Props) {
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
         />
       </div>
+
+      {/* Error */}
+      {error && (
+        <p className="text-sm text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-xl px-3 py-2">{error}</p>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">

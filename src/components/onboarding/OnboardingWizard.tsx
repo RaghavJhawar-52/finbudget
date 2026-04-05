@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const INCOME_SOURCES = [
   { id: "salary",   label: "Salary / Job",   cat: "Salary" },
   { id: "freelance",label: "Freelance",       cat: "Freelance" },
-  { id: "business", label: "Business",        cat: "Salary" },
+  { id: "business", label: "Business",        cat: "Freelance" },
   { id: "other",    label: "Other",           cat: "Salary" },
 ];
 
@@ -21,7 +21,7 @@ interface PresetExpense {
 
 const PRESET_EXPENSES: PresetExpense[] = [
   { id: "rent",      emoji: "🏠", label: "Rent / Mortgage",   cat: "Rent & Housing",    defaultAmount: 15000 },
-  { id: "grocery",   emoji: "🛒", label: "Monthly Groceries", cat: "Food & Dining",     defaultAmount: 3000  },
+  { id: "grocery",   emoji: "🛒", label: "Monthly Groceries", cat: "Groceries",         defaultAmount: 3000  },
   { id: "jio",       emoji: "📱", label: "Mobile Recharge",   cat: "Utilities",         defaultAmount: 399   },
   { id: "internet",  emoji: "🌐", label: "Internet/Broadband",cat: "Utilities",         defaultAmount: 699   },
   { id: "netflix",   emoji: "🎬", label: "Netflix",           cat: "Entertainment",     defaultAmount: 649   },
@@ -33,12 +33,13 @@ const PRESET_EXPENSES: PresetExpense[] = [
 ];
 
 const BUDGET_PRESETS = [
-  { cat: "Food & Dining",   emoji: "🍕", pct: 0.15 },
-  { cat: "Transport",       emoji: "🚗", pct: 0.08 },
-  { cat: "Shopping",        emoji: "🛍️", pct: 0.10 },
-  { cat: "Entertainment",   emoji: "🎬", pct: 0.05 },
-  { cat: "Health & Fitness",emoji: "💊", pct: 0.05 },
-  { cat: "Personal Care",   emoji: "💅", pct: 0.04 },
+  { cat: "Groceries",        emoji: "🛒", pct: 0.08 },
+  { cat: "Food & Dining",    emoji: "🍕", pct: 0.08 },
+  { cat: "Transport",        emoji: "🚗", pct: 0.08 },
+  { cat: "Shopping",         emoji: "🛍️", pct: 0.10 },
+  { cat: "Entertainment",    emoji: "🎬", pct: 0.05 },
+  { cat: "Health & Fitness", emoji: "💊", pct: 0.05 },
+  { cat: "Personal Care",    emoji: "💅", pct: 0.04 },
 ];
 
 // ─── Step indicator ───────────────────────────────────────────────────────────

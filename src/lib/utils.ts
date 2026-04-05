@@ -67,8 +67,9 @@ export const CATEGORY_COLORS = [
 
 /** Recurring interval options */
 export const RECURRING_INTERVALS = [
-  { value: "daily", label: "Daily" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
+  { value: "daily",     label: "Daily" },
+  { value: "weekly",    label: "Weekly" },
+  { value: "monthly",   label: "Monthly" },
+  { value: "quarterly", label: "Quarterly (every 3 months)" },
+  { value: "yearly",    label: "Yearly" },
 ];

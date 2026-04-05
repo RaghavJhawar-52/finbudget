@@ -124,12 +124,20 @@ export function ImportModal({ onClose, onImported }: Props) {
           })),
         }),
       });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setParseError(data.error ?? "Import failed. Please try again.");
+        return;
+      }
+
       const data = await res.json();
-      setImportedCount(data.imported ?? selected.length);
-      onImported(data.imported ?? selected.length);
+      const count = data.imported ?? selected.length;
+      setImportedCount(count);
       setStep("done");
+      onImported(count);
     } catch {
-      setParseError("Import failed. Please try again.");
+      setParseError("Network error. Please try again.");
     } finally {
       setImporting(false);
     }

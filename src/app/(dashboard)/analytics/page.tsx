@@ -12,18 +12,32 @@ import {
 } from "recharts";
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
+  const [data, setData]       = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoading(true);
+    setFetchError(false);
     fetch("/api/insights")
-      .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); });
-  }, []);
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d) => { setData(d); })
+      .catch(() => { setFetchError(true); })
+      .finally(() => { setLoading(false); });
+  };
+
+  useEffect(() => { loadData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return (
     <div className="space-y-6 animate-pulse max-w-5xl mx-auto">
       {[1,2,3].map((i) => <div key={i} className="h-72 bg-gray-200 dark:bg-gray-800 rounded-2xl" />)}
+    </div>
+  );
+
+  if (fetchError) return (
+    <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <p className="text-gray-500 dark:text-gray-400">Failed to load analytics data.</p>
+      <Button variant="secondary" size="sm" onClick={loadData}>Retry</Button>
     </div>
   );
 

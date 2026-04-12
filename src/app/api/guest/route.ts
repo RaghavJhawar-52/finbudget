@@ -22,6 +22,16 @@ export async function POST() {
       },
     });
 
+    // Silently clean up guest accounts older than 30 days to keep the DB tidy.
+    // Cascades handle categories, transactions, budgets, goals automatically.
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    await prisma.user.deleteMany({
+      where: {
+        email: { startsWith: "guest-", endsWith: "@finbudget.app" },
+        createdAt: { lt: cutoff },
+      },
+    }).catch(() => {}); // non-critical — don't fail the request if this errors
+
     // Return plain-text password so the client can call signIn immediately
     return NextResponse.json({ email, password }, { status: 201 });
   } catch {

@@ -47,6 +47,7 @@ export function ImportModal({ onClose, onImported }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [importing, setImporting] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
+  const [skippedCount, setSkippedCount]   = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -131,9 +132,11 @@ export function ImportModal({ onClose, onImported }: Props) {
         return;
       }
 
-      const data = await res.json();
-      const count = data.imported ?? selected.length;
+      const data    = await res.json();
+      const count   = data.imported ?? selected.length;
+      const skipped = data.skipped ?? 0;
       setImportedCount(count);
+      setSkippedCount(skipped);
       setStep("done");
       onImported(count);
     } catch {
@@ -385,6 +388,11 @@ export function ImportModal({ onClose, onImported }: Props) {
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Your dashboard will now reflect the imported data.
               </p>
+              {skippedCount > 0 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  {skippedCount} duplicate{skippedCount > 1 ? "s" : ""} skipped (already in your account).
+                </p>
+              )}
             </div>
             <div className="flex gap-3 justify-center pt-2">
               <Button onClick={onClose}>View Transactions</Button>

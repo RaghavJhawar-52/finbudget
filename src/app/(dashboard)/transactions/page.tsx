@@ -9,14 +9,17 @@ import { Card } from "@/components/ui/Card";
 import { ImportModal } from "@/components/import/ImportModal";
 import { ToastContainer, useToast } from "@/components/ui/Toast";
 import type { Transaction, Category } from "@/types";
-import { Plus, Search, Download, Upload, X } from "lucide-react";
+import { Plus, Search, Download, Upload, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { FAB } from "@/components/ui/FAB";
 import { format } from "date-fns";
+
+const PAGE_SIZE = 50;
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories]     = useState<Category[]>([]);
   const [total, setTotal]               = useState(0);
+  const [page, setPage]                 = useState(1);
   const [loading, setLoading]           = useState(true);
   const [showAdd, setShowAdd]           = useState(false);
   const [showImport, setShowImport]     = useState(false);
@@ -24,18 +27,21 @@ export default function TransactionsPage() {
   const { toasts, toast, removeToast }  = useToast();
 
   // Filters
-  const [searchInput, setSearchInput] = useState(""); // raw input — debounced below
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch]     = useState("");
   const [type, setType]         = useState("");
   const [category, setCategory] = useState("");
   const [from, setFrom]         = useState("");
   const [to, setTo]             = useState("");
 
-  // Debounce search: only trigger fetch 350 ms after the user stops typing
+  // Debounce search
   useEffect(() => {
-    const t = setTimeout(() => setSearch(searchInput), 350);
+    const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 350);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  // Reset to page 1 whenever any filter changes
+  useEffect(() => { setPage(1); }, [type, category, from, to]);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
@@ -45,14 +51,20 @@ export default function TransactionsPage() {
     if (category) params.set("category", category);
     if (from)     params.set("from", from);
     if (to)       params.set("to", to);
-    params.set("limit", "100");
+    params.set("page",  String(page));
+    params.set("limit", String(PAGE_SIZE));
 
-    const res  = await fetch(`/api/transactions?${params}`);
-    const data = await res.json();
-    setTransactions(data.transactions ?? []);
-    setTotal(data.total ?? 0);
-    setLoading(false);
-  }, [search, type, category, from, to]);
+    try {
+      const res  = await fetch(`/api/transactions?${params}`);
+      const data = await res.json();
+      setTransactions(data.transactions ?? []);
+      setTotal(data.total ?? 0);
+    } catch {
+      setTransactions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, type, category, from, to, page]);
 
   useEffect(() => { fetchTransactions(); }, [fetchTransactions]);
   useEffect(() => {
@@ -60,10 +72,11 @@ export default function TransactionsPage() {
   }, []);
 
   const clearFilters = () => {
-    setSearchInput(""); setSearch(""); setType(""); setCategory(""); setFrom(""); setTo("");
+    setSearchInput(""); setSearch(""); setType(""); setCategory(""); setFrom(""); setTo(""); setPage(1);
   };
 
   const hasFilters = searchInput || search || type || category || from || to;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handleExport = async () => {
     setExporting(true);
@@ -93,6 +106,7 @@ export default function TransactionsPage() {
 
   const handleImported = (count: number) => {
     setShowImport(false);
+    setPage(1);
     fetchTransactions();
     toast(`✅ ${count} transaction${count !== 1 ? "s" : ""} imported successfully!`, "success");
   };
@@ -121,7 +135,6 @@ export default function TransactionsPage() {
       {/* Filters */}
       <Card padding="sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {/* Search */}
           <div className="relative sm:col-span-2 lg:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -133,20 +146,17 @@ export default function TransactionsPage() {
             />
           </div>
 
-          {/* Type */}
           <select className="input-base" value={type} onChange={(e) => setType(e.target.value)}>
             <option value="">All types</option>
             <option value="INCOME">Income</option>
             <option value="EXPENSE">Expense</option>
           </select>
 
-          {/* Category */}
           <select className="input-base" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="">All categories</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
 
-          {/* From date */}
           <input type="date" className="input-base" value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
 
@@ -189,6 +199,34 @@ export default function TransactionsPage() {
         )}
       </Card>
 
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary" size="sm"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-20 text-center">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="secondary" size="sm"
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile FAB */}
       <FAB onClick={() => setShowAdd(true)} />
 
@@ -208,7 +246,6 @@ export default function TransactionsPage() {
         />
       )}
 
-      {/* Toast notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );

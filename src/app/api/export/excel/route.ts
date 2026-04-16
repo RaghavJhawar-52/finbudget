@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import ExcelJS from "exceljs";
 
 // GET /api/export/excel — download full Excel report
@@ -419,39 +419,26 @@ export async function GET(req: NextRequest) {
     totRow.getCell("net").numFmt      = numFmt;
     totRow.getCell("savings").numFmt  = "0.0%";
 
-    // Data bars for Income and Expenses columns
+    // Heat-colour the income/expense cells by relative size
     if (dataRows > 0) {
-      ws.addConditionalFormatting({
-        ref: `B2:B${dataRows + 1}`,
-        rules: [{
-          type: "dataBar",
-          priority: 1,
-          gradient: true,
-          color: { argb: "FF16A34A" },
-          minLength: 0,
-          maxLength: 100,
-        } as ExcelJS.DataBarRuleType],
-      });
-      ws.addConditionalFormatting({
-        ref: `C2:C${dataRows + 1}`,
-        rules: [{
-          type: "dataBar",
-          priority: 1,
-          gradient: true,
-          color: { argb: "FFEF4444" },
-          minLength: 0,
-          maxLength: 100,
-        } as ExcelJS.DataBarRuleType],
-      });
-      // Color scale on Net Balance
-      ws.addConditionalFormatting({
-        ref: `D2:D${dataRows + 1}`,
-        rules: [{
-          type: "colorScale",
-          priority: 2,
-          cfvo: [{ type: "min" }, { type: "percentile", value: 50 }, { type: "max" }],
-          color: [{ argb: "FFEF4444" }, { argb: "FFFBBF24" }, { argb: "FF16A34A" }],
-        } as ExcelJS.ColorScaleRuleType],
+      const maxIncome  = Math.max(...sortedMonths.map(([, b]) => b.income));
+      const maxExpense = Math.max(...sortedMonths.map(([, b]) => b.expense));
+      sortedMonths.forEach(([, bucket], idx) => {
+        const rowNum = idx + 2;
+        // Income: deeper green as value increases
+        if (maxIncome > 0) {
+          const intensity = Math.round((bucket.income / maxIncome) * 180);
+          const g = (75 + intensity).toString(16).padStart(2, "0").toUpperCase();
+          ws.getCell(`B${rowNum}`).fill = solidFill(`FF00${g}00`);
+          ws.getCell(`B${rowNum}`).font = { name: "Arial", size: 10, bold: bucket.income === maxIncome, color: { argb: "FFFFFFFF" } };
+        }
+        // Expense: deeper red as value increases
+        if (maxExpense > 0) {
+          const intensity = Math.round((bucket.expense / maxExpense) * 180);
+          const r = (75 + intensity).toString(16).padStart(2, "0").toUpperCase();
+          ws.getCell(`C${rowNum}`).fill = solidFill(`FF${r}0000`);
+          ws.getCell(`C${rowNum}`).font = { name: "Arial", size: 10, bold: bucket.expense === maxExpense, color: { argb: "FFFFFFFF" } };
+        }
       });
     }
 
@@ -528,27 +515,15 @@ export async function GET(req: NextRequest) {
       totRow.getCell("amount").numFmt = numFmt;
       totRow.getCell("pct").numFmt    = "0.0%";
 
-      // Data bars on Amount column
-      ws.addConditionalFormatting({
-        ref: `C2:C${dataRows + 1}`,
-        rules: [{
-          type: "dataBar",
-          priority: 1,
-          gradient: true,
-          color: { argb: "FF7C3AED" },
-          minLength: 0,
-          maxLength: 100,
-        } as ExcelJS.DataBarRuleType],
-      });
-      // Color scale on % of Total
-      ws.addConditionalFormatting({
-        ref: `E2:E${dataRows + 1}`,
-        rules: [{
-          type: "colorScale",
-          priority: 2,
-          cfvo: [{ type: "min" }, { type: "max" }],
-          color: [{ argb: "FFFEF9C3" }, { argb: "FF7C3AED" }],
-        } as ExcelJS.ColorScaleRuleType],
+      // Heat-colour the amount cells — top 3 categories get progressively deeper purple
+      const maxAmt = sortedCats[0]?.[1].amount ?? 1;
+      sortedCats.forEach(([, data], idx) => {
+        const rowNum = idx + 2;
+        const intensity = Math.round((data.amount / maxAmt) * 160);
+        const b = (95 + intensity).toString(16).padStart(2, "0").toUpperCase();
+        ws.getCell(`C${rowNum}`).fill = solidFill(`FF6B21${b}`);
+        ws.getCell(`C${rowNum}`).font = { name: "Arial", size: 10, bold: idx < 3, color: { argb: "FFFFFFFF" } };
+        ws.getCell(`C${rowNum}`).numFmt = numFmt;
       });
     }
 

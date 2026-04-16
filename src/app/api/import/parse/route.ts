@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { autoCategorizeName } from "@/lib/categorizer";
+import ExcelJS from "exceljs";
 
 // ─── CSV Parser ───────────────────────────────────────────────────────────────
 function parseCSV(raw: string): string[][] {
@@ -110,21 +111,121 @@ function detectBank(headers: string[]): string {
   return "Generic";
 }
 
+// ─── FinBudget Excel Parser ───────────────────────────────────────────────────
+type ImportRow = {
+  id: string; rawDate: string; date: string;
+  description: string; amount: number;
+  type: "INCOME" | "EXPENSE";
+  suggestedCategoryId: string | null;
+  suggestedCategoryName: string | null;
+};
+
+async function parseFinBudgetExcel(
+  buffer: ArrayBuffer,
+  categories: { id: string; name: string; keywords: string[] }[]
+): Promise<ImportRow[]> {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buffer);
+
+  // Try "All Transactions" sheet first, then first sheet
+  const ws = wb.getWorksheet("All Transactions") ?? wb.worksheets[0];
+  if (!ws) throw new Error("No worksheet found");
+
+  const parsed: ImportRow[] = [];
+  let headerRow: string[] = [];
+
+  ws.eachRow((row, rowNumber) => {
+    const cells = (row.values as (ExcelJS.CellValue | undefined)[]).slice(1); // slice off 1-indexed gap
+    const values = cells.map(c => {
+      if (c === null || c === undefined) return "";
+      if (typeof c === "object" && "result" in c) return String(c.result ?? "");
+      return String(c);
+    });
+
+    if (rowNumber === 1) {
+      headerRow = values.map(v => v.toLowerCase().trim());
+      return;
+    }
+
+    // Skip totals / empty rows
+    const first = values[0]?.trim().toUpperCase();
+    if (!first || first === "TOTAL" || first === "DATE") return;
+
+    const dateIdx = headerRow.findIndex(h => h === "date");
+    const descIdx = headerRow.findIndex(h => h === "description");
+    const typeIdx = headerRow.findIndex(h => h === "type");
+    const amtIdx  = headerRow.findIndex(h => h === "amount");
+    if (dateIdx === -1 || descIdx === -1 || amtIdx === -1) return;
+
+    const rawDate    = values[dateIdx]?.trim() ?? "";
+    const description = values[descIdx]?.trim() ?? "";
+    const rawType    = values[typeIdx]?.trim().toUpperCase() ?? "";
+    const rawAmount  = values[amtIdx]?.trim() ?? "";
+    if (!rawDate || !description || !rawAmount) return;
+
+    const parsedDate = parseDate(rawDate);
+    if (!parsedDate || isNaN(parsedDate.getTime())) return;
+
+    const amount = parseAmount(rawAmount);
+    if (amount <= 0) return;
+
+    const type: "INCOME" | "EXPENSE" = rawType === "INCOME" ? "INCOME" : "EXPENSE";
+    const matchedName = autoCategorizeName(description, categories);
+    const matchedCat  = matchedName
+      ? categories.find(c => c.name.toLowerCase() === matchedName.toLowerCase())
+      : null;
+
+    parsed.push({
+      id: `row-${rowNumber}`,
+      rawDate,
+      date: `${parsedDate.getFullYear()}-${String(parsedDate.getMonth() + 1).padStart(2,"0")}-${String(parsedDate.getDate()).padStart(2,"0")}`,
+      description,
+      amount,
+      type,
+      suggestedCategoryId:   matchedCat?.id   ?? null,
+      suggestedCategoryName: matchedCat?.name ?? null,
+    });
+  });
+
+  return parsed;
+}
+
 // ─── Route ────────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let content: string;
+  let fileBuffer: ArrayBuffer;
+  let fileName: string;
   try {
     const fd = await req.formData();
     const file = fd.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
-    content = await file.text();
+    fileName   = file.name.toLowerCase();
+    fileBuffer = await file.arrayBuffer();
   } catch {
     return NextResponse.json({ error: "Could not read file" }, { status: 400 });
   }
 
+  // ── Excel path ──────────────────────────────────────────────────────────────
+  if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+    const categories = await prisma.category.findMany({
+      where: { userId: session.user.id },
+      select: { id: true, name: true, keywords: true },
+    });
+    try {
+      const rows = await parseFinBudgetExcel(fileBuffer, categories);
+      if (rows.length === 0) {
+        return NextResponse.json({ error: "No valid transactions found in Excel file. Make sure you are uploading a FinBudget export (.xlsx)." }, { status: 422 });
+      }
+      return NextResponse.json({ bank: "FinBudget", rows, totalRows: rows.length });
+    } catch (e) {
+      return NextResponse.json({ error: `Could not read Excel file: ${(e as Error).message}` }, { status: 422 });
+    }
+  }
+
+  // ── CSV path ────────────────────────────────────────────────────────────────
+  const content = new TextDecoder().decode(fileBuffer);
   const allRows = parseCSV(content);
   if (allRows.length < 2) {
     return NextResponse.json({ error: "File appears empty or unreadable" }, { status: 422 });
@@ -162,14 +263,6 @@ export async function POST(req: NextRequest) {
     where: { userId: session.user.id },
     select: { id: true, name: true, keywords: true },
   });
-
-  type ImportRow = {
-    id: string; rawDate: string; date: string;
-    description: string; amount: number;
-    type: "INCOME" | "EXPENSE";
-    suggestedCategoryId: string | null;
-    suggestedCategoryName: string | null;
-  };
 
   const parsed: ImportRow[] = [];
 

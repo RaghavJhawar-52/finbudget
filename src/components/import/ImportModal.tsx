@@ -56,8 +56,8 @@ export function ImportModal({ onClose, onImported }: Props) {
 
   // ── File handling ──────────────────────────────────────────────────────────
   const handleFile = useCallback((f: File) => {
-    if (!f.name.match(/\.(csv|txt)$/i)) {
-      setParseError("Please upload a CSV file (.csv or .txt)");
+    if (!f.name.match(/\.(csv|txt|xlsx|xls)$/i)) {
+      setParseError("Please upload a CSV or Excel file (.csv, .xlsx)");
       return;
     }
     setFile(f);
@@ -198,7 +198,7 @@ export function ImportModal({ onClose, onImported }: Props) {
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,.txt"
+                accept=".csv,.txt,.xlsx,.xls"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
               />
@@ -211,8 +211,8 @@ export function ImportModal({ onClose, onImported }: Props) {
               ) : (
                 <>
                   <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                  <p className="font-semibold text-gray-700 dark:text-gray-300">Drop your CSV file here</p>
-                  <p className="text-sm text-gray-500 mt-1">or click to browse</p>
+                  <p className="font-semibold text-gray-700 dark:text-gray-300">Drop your file here</p>
+                  <p className="text-sm text-gray-500 mt-1">CSV, TXT or Excel (.xlsx) — or click to browse</p>
                 </>
               )}
             </div>

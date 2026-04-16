@@ -1,5 +1,5 @@
 /**
- * Regenerates all PWA PNG icons from public/icons/icon.svg using sharp.
+ * Regenerates all PWA + Apple touch icons from SVG sources using sharp.
  * Run once: node scripts/generate-icons.mjs
  */
 import sharp from "sharp";
@@ -9,26 +9,44 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root      = join(__dirname, "..");
-const svgPath   = join(root, "public", "icons", "icon.svg");
-const svgBuffer = readFileSync(svgPath);
+const iconsDir  = join(root, "public", "icons");
+const publicDir = join(root, "public");
 
-const sizes = [72, 96, 128, 144, 152, 180, 192, 384, 512];
+// ── Android / PWA icons (from icons/icon.svg — has rounded corners for splash) ──
+const androidSvg = readFileSync(join(iconsDir, "icon.svg"));
+const androidSizes = [72, 96, 128, 144, 152, 180, 192, 384, 512];
 
-for (const size of sizes) {
-  const out = join(root, "public", "icons", `icon-${size}x${size}.png`);
-  await sharp(svgBuffer)
+for (const size of androidSizes) {
+  await sharp(androidSvg)
     .resize(size, size)
     .png({ compressionLevel: 9 })
-    .toFile(out);
-  console.log(`✓ icon-${size}x${size}.png`);
+    .toFile(join(iconsDir, `icon-${size}x${size}.png`));
+  console.log(`✓ icons/icon-${size}x${size}.png`);
 }
 
-// apple-touch-icon (180x180) goes in public root — Safari uses this
-const appleOut = join(root, "public", "apple-touch-icon.png");
-await sharp(svgBuffer)
+// ── Apple touch icons (from apple-touch-icon-source.svg — full-bleed, no rx) ──
+// iOS applies its own squircle mask, so the source must be a plain square.
+const appleSvg = readFileSync(join(iconsDir, "apple-touch-icon-source.svg"));
+const appleSizes = [
+  { size: 120, name: "apple-touch-icon-120x120.png" },  // iPhone non-retina
+  { size: 152, name: "apple-touch-icon-152x152.png" },  // iPad non-retina
+  { size: 167, name: "apple-touch-icon-167x167.png" },  // iPad Pro
+  { size: 180, name: "apple-touch-icon-180x180.png" },  // iPhone retina (primary)
+];
+
+for (const { size, name } of appleSizes) {
+  await sharp(appleSvg)
+    .resize(size, size)
+    .png({ compressionLevel: 9 })
+    .toFile(join(iconsDir, name));
+  console.log(`✓ icons/${name}`);
+}
+
+// Copy 180x180 to public root — fallback for browsers that look there by convention
+await sharp(appleSvg)
   .resize(180, 180)
   .png({ compressionLevel: 9 })
-  .toFile(appleOut);
-console.log("✓ apple-touch-icon.png");
+  .toFile(join(publicDir, "apple-touch-icon.png"));
+console.log("✓ apple-touch-icon.png  (public root — Safari fallback)");
 
 console.log("\nAll icons generated successfully.");

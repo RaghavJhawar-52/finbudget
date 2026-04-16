@@ -15,7 +15,7 @@ import { FAB }                from "@/components/ui/FAB";
 import { SummaryDrawer }      from "@/components/dashboard/SummaryDrawer";
 import type { DashboardData, Budget } from "@/types";
 import {
-  TrendingUp, TrendingDown, DollarSign, PiggyBank,
+  TrendingUp, TrendingDown, IndianRupee, PiggyBank,
   Plus, RefreshCw, RepeatIcon,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
@@ -147,7 +147,7 @@ export default function DashboardPage() {
         <StatsCard
           title="Balance"
           value={data.balance}
-          icon={DollarSign}
+          icon={IndianRupee}
           iconColor={data.balance >= 0 ? "text-primary-600" : "text-red-500"}
           iconBg={data.balance >= 0 ? "bg-primary-100 dark:bg-primary-900/30" : "bg-red-100 dark:bg-red-900/30"}
         />

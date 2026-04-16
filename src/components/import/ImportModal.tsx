@@ -184,9 +184,8 @@ export function ImportModal({ onClose, onImported }: Props) {
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
-              onClick={() => inputRef.current?.click()}
               className={cn(
-                "border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all",
+                "relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all",
                 dragOver
                   ? "border-primary-500 bg-primary-50 dark:bg-primary-950/30"
                   : file
@@ -194,11 +193,13 @@ export function ImportModal({ onClose, onImported }: Props) {
                   : "border-gray-300 dark:border-gray-600 hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               )}
             >
+              {/* Overlay the input over the whole zone — required for iOS Safari,
+                  which blocks programmatic .click() on hidden inputs */}
               <input
                 ref={inputRef}
                 type="file"
                 accept=".csv,.txt"
-                className="hidden"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }}
               />
               {file ? (

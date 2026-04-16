@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { TransactionList } from "@/components/transactions/TransactionList";
 import { TransactionForm } from "@/components/forms/TransactionForm";
 import { Modal } from "@/components/ui/Modal";
@@ -16,7 +17,15 @@ import { format } from "date-fns";
 
 const PAGE_SIZE = 50;
 
-export default function TransactionsPage() {
+export default function TransactionsPageWrapper() {
+  return (
+    <Suspense>
+      <TransactionsPage />
+    </Suspense>
+  );
+}
+
+function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories]     = useState<Category[]>([]);
   const [total, setTotal]               = useState(0);
@@ -28,6 +37,10 @@ export default function TransactionsPage() {
   const [exporting, setExporting]       = useState(false);
   const { toasts, toast, removeToast }  = useToast();
 
+  // Pre-fill filters from URL params (e.g. ?type=INCOME from dashboard)
+  const searchParams = useSearchParams();
+  const didInit = useRef(false);
+
   // Filters
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch]     = useState("");
@@ -35,6 +48,13 @@ export default function TransactionsPage() {
   const [category, setCategory] = useState("");
   const [from, setFrom]         = useState("");
   const [to, setTo]             = useState("");
+
+  useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+    const t = searchParams.get("type");
+    if (t === "INCOME" || t === "EXPENSE") setType(t);
+  }, [searchParams]);
 
   // Debounce search
   useEffect(() => {

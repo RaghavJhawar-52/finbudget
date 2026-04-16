@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, ChevronRight } from "lucide-react";
 import { useCountUp } from "@/hooks/useCountUp";
 
 interface Props {
@@ -13,6 +13,8 @@ interface Props {
   iconBg: string;
   trend?: { value: number; label: string };
   className?: string;
+  onClick?: () => void;
+  clickable?: boolean;
 }
 
 /** Format a live animated number as currency or percentage */
@@ -43,11 +45,20 @@ export function StatsCard({
   iconBg,
   trend,
   className,
+  onClick,
+  clickable,
 }: Props) {
   const animated = useCountUp(value, 900);
 
   return (
-    <div className={cn("card p-5", className)}>
+    <div
+      className={cn(
+        "card p-5",
+        clickable && "cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 active:scale-95",
+        className,
+      )}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
@@ -66,13 +77,18 @@ export function StatsCard({
             </p>
           )}
         </div>
-        <div
-          className={cn(
-            "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0",
-            iconBg
+        <div className="flex flex-col items-end gap-1">
+          <div
+            className={cn(
+              "w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0",
+              iconBg
+            )}
+          >
+            <Icon className={cn("w-5 h-5", iconColor)} />
+          </div>
+          {clickable && (
+            <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600" />
           )}
-        >
-          <Icon className={cn("w-5 h-5", iconColor)} />
         </div>
       </div>
     </div>

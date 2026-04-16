@@ -12,6 +12,7 @@ import { TransactionForm }    from "@/components/forms/TransactionForm";
 import { Card, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button }             from "@/components/ui/Button";
 import { FAB }                from "@/components/ui/FAB";
+import { SummaryDrawer }      from "@/components/dashboard/SummaryDrawer";
 import type { DashboardData, Budget } from "@/types";
 import {
   TrendingUp, TrendingDown, DollarSign, PiggyBank,
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const [loading, setLoading]   = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [showAddTxn, setShowAddTxn] = useState(false);
+  const [summaryType, setSummaryType] = useState<"INCOME" | "EXPENSE" | null>(null);
 
   // Recurring status banner
   const [recurringPosted, setRecurringPosted] = useState<number>(0);
@@ -130,6 +132,8 @@ export default function DashboardPage() {
           icon={TrendingUp}
           iconColor="text-green-600"
           iconBg="bg-green-100 dark:bg-green-900/30"
+          onClick={() => setSummaryType("INCOME")}
+          clickable
         />
         <StatsCard
           title="Total Expenses"
@@ -137,6 +141,8 @@ export default function DashboardPage() {
           icon={TrendingDown}
           iconColor="text-red-500"
           iconBg="bg-red-100 dark:bg-red-900/30"
+          onClick={() => setSummaryType("EXPENSE")}
+          clickable
         />
         <StatsCard
           title="Balance"
@@ -209,6 +215,15 @@ export default function DashboardPage() {
           onCancel={() => setShowAddTxn(false)}
         />
       </Modal>
+
+      {/* Income / Expense summary drawer */}
+      {summaryType && (
+        <SummaryDrawer
+          type={summaryType}
+          total={summaryType === "INCOME" ? data.totalIncome : data.totalExpenses}
+          onClose={() => setSummaryType(null)}
+        />
+      )}
     </div>
   );
 }

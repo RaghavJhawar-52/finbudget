@@ -7,9 +7,10 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ImportModal } from "@/components/import/ImportModal";
+import { ExcelExportModal } from "@/components/export/ExcelExportModal";
 import { ToastContainer, useToast } from "@/components/ui/Toast";
 import type { Transaction, Category } from "@/types";
-import { Plus, Search, Download, Upload, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Search, Download, Upload, X, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { FAB } from "@/components/ui/FAB";
 import { format } from "date-fns";
 
@@ -23,6 +24,7 @@ export default function TransactionsPage() {
   const [loading, setLoading]           = useState(true);
   const [showAdd, setShowAdd]           = useState(false);
   const [showImport, setShowImport]     = useState(false);
+  const [showExcelExport, setShowExcelExport] = useState(false);
   const [exporting, setExporting]       = useState(false);
   const { toasts, toast, removeToast }  = useToast();
 
@@ -125,6 +127,9 @@ export default function TransactionsPage() {
           </Button>
           <Button variant="secondary" size="sm" onClick={handleExport} loading={exporting} disabled={exporting}>
             {!exporting && <Download className="w-4 h-4" />} {exporting ? "Exporting…" : "Export CSV"}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setShowExcelExport(true)}>
+            <FileSpreadsheet className="w-4 h-4" /> Export Excel
           </Button>
           <Button size="sm" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4" /> Add
@@ -244,6 +249,11 @@ export default function TransactionsPage() {
           onClose={() => setShowImport(false)}
           onImported={handleImported}
         />
+      )}
+
+      {/* Excel export modal */}
+      {showExcelExport && (
+        <ExcelExportModal onClose={() => setShowExcelExport(false)} />
       )}
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />

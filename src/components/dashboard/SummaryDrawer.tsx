@@ -5,6 +5,41 @@ import { X, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Transaction } from "@/types";
 
+// Map Lucide icon names (stored in DB) → emoji
+const ICON_EMOJI: Record<string, string> = {
+  "wallet":        "💰",
+  "briefcase":     "💼",
+  "laptop":        "💻",
+  "utensils":      "🍽️",
+  "shopping-cart": "🛒",
+  "shopping-bag":  "🛍️",
+  "car":           "🚗",
+  "home":          "🏠",
+  "heart":         "❤️",
+  "tv":            "📺",
+  "plane":         "✈️",
+  "gift":          "🎁",
+  "zap":           "⚡",
+  "shield":        "🛡️",
+  "book-open":     "📖",
+  "percent":       "📊",
+  "trending-up":   "📈",
+  "key":           "🔑",
+  "tag":           "🏷️",
+  "scissors":      "✂️",
+  "baby":          "👶",
+  "paw-print":     "🐾",
+  "sofa":          "🛋️",
+  "wine":          "🍷",
+  "award":         "🏆",
+  "shirt":         "👕",
+  "refresh-cw":    "🔄",
+};
+
+function catIcon(icon: string): string {
+  return ICON_EMOJI[icon] ?? "📦";
+}
+
 interface Props {
   type: "INCOME" | "EXPENSE";
   total: number;
@@ -174,7 +209,7 @@ export function SummaryDrawer({ type, total, onClose }: Props) {
                       <div key={cat.name}>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-base leading-none">{cat.icon}</span>
+                            <span className="text-base leading-none">{catIcon(cat.icon)}</span>
                             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{cat.name}</span>
                             <span className="text-xs text-gray-400 flex-shrink-0">{cat.count}×</span>
                           </div>
@@ -208,7 +243,7 @@ export function SummaryDrawer({ type, total, onClose }: Props) {
                         className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-gray-800"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <span className="text-base flex-shrink-0">{t.category?.icon ?? "📦"}</span>
+                          <span className="text-base flex-shrink-0">{catIcon(t.category?.icon ?? "")}</span>
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{t.description}</p>
                             <p className="text-xs text-gray-400">

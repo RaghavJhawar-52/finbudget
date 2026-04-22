@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ImportModal } from "@/components/import/ImportModal";
 import { ExcelExportModal } from "@/components/export/ExcelExportModal";
+import { SmsPasteModal }    from "@/components/sms/SmsPasteModal";
 import { ToastContainer, useToast } from "@/components/ui/Toast";
 import type { Transaction, Category } from "@/types";
-import { Plus, Search, Download, Upload, X, ChevronLeft, ChevronRight, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, Download, Upload, X, ChevronLeft, ChevronRight, FileSpreadsheet, MessageSquare } from "lucide-react";
 import { FAB } from "@/components/ui/FAB";
 import { format } from "date-fns";
 
@@ -34,6 +35,7 @@ function TransactionsPage() {
   const [showAdd, setShowAdd]           = useState(false);
   const [showImport, setShowImport]     = useState(false);
   const [showExcelExport, setShowExcelExport] = useState(false);
+  const [showSms, setShowSms]           = useState(false);
   const [exporting, setExporting]       = useState(false);
   const { toasts, toast, removeToast }  = useToast();
 
@@ -142,6 +144,9 @@ function TransactionsPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">{total} transactions</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Button variant="secondary" size="sm" onClick={() => setShowSms(true)}>
+            <MessageSquare className="w-4 h-4" /> From SMS
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => setShowImport(true)}>
             <Upload className="w-4 h-4" /> Import
           </Button>
@@ -274,6 +279,14 @@ function TransactionsPage() {
       {/* Excel export modal */}
       {showExcelExport && (
         <ExcelExportModal onClose={() => setShowExcelExport(false)} />
+      )}
+
+      {/* SMS paste modal */}
+      {showSms && (
+        <SmsPasteModal
+          onClose={() => setShowSms(false)}
+          onSuccess={() => { fetchTransactions(); toast("✅ Transaction added from SMS!", "success"); }}
+        />
       )}
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />

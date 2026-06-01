@@ -37,9 +37,9 @@ export function getMonthLabel(date: Date): string {
   return format(date, "MMM yyyy");
 }
 
-/** Build an array of last N months starting oldest to newest */
-export function getLastNMonths(n: number): Date[] {
-  return Array.from({ length: n }, (_, i) => subMonths(new Date(), n - 1 - i));
+/** Build an array of last N months starting oldest to newest, ending at endDate (default: now) */
+export function getLastNMonths(n: number, endDate: Date = new Date()): Date[] {
+  return Array.from({ length: n }, (_, i) => subMonths(endDate, n - 1 - i));
 }
 
 /** Calculate percentage, guarding against division by zero */

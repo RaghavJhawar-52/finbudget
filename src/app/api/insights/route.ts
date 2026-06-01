@@ -6,13 +6,22 @@ import { generateInsights } from "@/lib/insights";
 import { getLastNMonths, getMonthRange } from "@/lib/utils";
 
 // GET /api/insights — dashboard data + insights
+// Optional query params: ?month=1-12&year=YYYY  → scope data to that month
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const userId = session.user.id;
-  const now    = new Date();
-  const { start: monthStart, end: monthEnd } = getMonthRange(now);
+  const sp     = req.nextUrl.searchParams;
+  const mParam = sp.get("month");
+  const yParam = sp.get("year");
+
+  const now         = new Date();
+  const targetDate  = mParam && yParam
+    ? new Date(parseInt(yParam), parseInt(mParam) - 1, 1)
+    : now;
+
+  const { start: monthStart, end: monthEnd } = getMonthRange(targetDate);
 
   // Current month transactions
   const currentTransactions = await prisma.transaction.findMany({
@@ -21,7 +30,7 @@ export async function GET(req: NextRequest) {
   });
 
   // Previous month transactions (for comparison)
-  const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 1);
   const { start: prevStart, end: prevEnd } = getMonthRange(prevDate);
   const prevTransactions = await prisma.transaction.findMany({
     where: { userId, date: { gte: prevStart, lte: prevEnd }, type: "EXPENSE" },
@@ -53,8 +62,8 @@ export async function GET(req: NextRequest) {
     }))
     .sort((a, b) => b.amount - a.amount);
 
-  // Monthly trend (last 6 months)
-  const months = getLastNMonths(6);
+  // Monthly trend (last 6 months ending at targetDate)
+  const months = getLastNMonths(6, targetDate);
   const monthlyStats = await Promise.all(
     months.map(async (date) => {
       const { start, end } = getMonthRange(date);
@@ -71,7 +80,7 @@ export async function GET(req: NextRequest) {
 
   // Budget alerts
   const budgets = await prisma.budget.findMany({
-    where: { userId, month: now.getMonth() + 1, year: now.getFullYear() },
+    where: { userId, month: targetDate.getMonth() + 1, year: targetDate.getFullYear() },
     include: { category: true },
   });
 

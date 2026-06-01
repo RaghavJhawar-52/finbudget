@@ -16,7 +16,7 @@ import { SummaryDrawer }      from "@/components/dashboard/SummaryDrawer";
 import type { DashboardData, Budget } from "@/types";
 import {
   TrendingUp, TrendingDown, IndianRupee, PiggyBank,
-  Plus, RefreshCw, RepeatIcon,
+  Plus, RefreshCw, RepeatIcon, CheckCircle2, X,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -28,9 +28,12 @@ export default function DashboardPage() {
   const [showAddTxn, setShowAddTxn] = useState(false);
   const [summaryType, setSummaryType] = useState<"INCOME" | "EXPENSE" | null>(null);
 
-  // Recurring status banner
-  const [recurringPosted, setRecurringPosted] = useState<number>(0);
-  const [recurringNames, setRecurringNames]   = useState<string[]>([]);
+  // Recurring review banner
+  type DueTxn = { description: string; amount: number; date: string; type: string };
+  const [dueTxns, setDueTxns]           = useState<DueTxn[]>([]);
+  const [recurringDismissed, setRecurringDismissed] = useState(false);
+  const [posting, setPosting]           = useState(false);
+  const [postedCount, setPostedCount]   = useState(0);
 
   const fetchData = async () => {
     setLoading(true);
@@ -54,21 +57,30 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    // Fetch dashboard data; check recurring result from layout (stored in sessionStorage)
     fetchData();
 
-    const raw = sessionStorage.getItem("recurring_posted");
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as { created: number; transactions: { description: string }[] };
-        if (parsed.created > 0) {
-          setRecurringPosted(parsed.created);
-          setRecurringNames(parsed.transactions.map((t: { description: string }) => t.description));
-        }
-      } catch { /* ignore */ }
-      sessionStorage.removeItem("recurring_posted");
-    }
+    // Check which recurring transactions are due — never auto-post, just preview
+    fetch("/api/recurring/process")
+      .then(r => r.json())
+      .then(data => {
+        if (data.due > 0) setDueTxns(data.transactions);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handlePostRecurring = async () => {
+    setPosting(true);
+    try {
+      const res = await fetch("/api/recurring/process", { method: "POST" });
+      const data = await res.json();
+      setPostedCount(data.created ?? 0);
+      setDueTxns([]);
+      fetchData();
+    } catch { /* ignore */ } finally {
+      setPosting(false);
+    }
+  };
 
   if (loading) return <DashboardSkeleton />;
   if (fetchError) return (
@@ -102,24 +114,58 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recurring auto-post banner */}
-      {recurringPosted > 0 && (
-        <div className="flex items-start gap-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-700 rounded-2xl px-5 py-3.5 animate-slide-up">
-          <RepeatIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400 flex-shrink-0 mt-0.5" />
+      {/* Recurring — due transactions need manual approval */}
+      {!recurringDismissed && dueTxns.length > 0 && (
+        <div className="flex items-start gap-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-700 rounded-2xl px-5 py-4 animate-slide-up">
+          <RepeatIcon className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200">
-              {recurringPosted} recurring transaction{recurringPosted > 1 ? "s" : ""} auto-posted
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              {dueTxns.length} recurring transaction{dueTxns.length > 1 ? "s" : ""} due
             </p>
-            <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5 truncate">
-              {recurringNames.slice(0, 3).join(" · ")}
-              {recurringNames.length > 3 && ` · +${recurringNames.length - 3} more`}
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5 truncate">
+              {dueTxns.slice(0, 3).map(t => t.description).join(" · ")}
+              {dueTxns.length > 3 && ` · +${dueTxns.length - 3} more`}
             </p>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handlePostRecurring}
+                disabled={posting}
+                className="inline-flex items-center gap-1.5 text-xs font-medium bg-amber-600 hover:bg-amber-700 disabled:opacity-60 text-white rounded-lg px-3 py-1.5 transition-colors"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {posting ? "Posting…" : "Post now"}
+              </button>
+              <button
+                onClick={() => setRecurringDismissed(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200 rounded-lg px-3 py-1.5 transition-colors"
+              >
+                Skip for now
+              </button>
+            </div>
           </div>
           <button
-            onClick={() => setRecurringPosted(0)}
-            className="text-indigo-400 hover:text-indigo-600 text-xs flex-shrink-0"
+            onClick={() => setRecurringDismissed(true)}
+            className="text-amber-400 hover:text-amber-600 flex-shrink-0 mt-0.5"
+            aria-label="Dismiss"
           >
-            ✕
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Confirmation after manual post */}
+      {postedCount > 0 && (
+        <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-700 rounded-2xl px-5 py-3.5 animate-slide-up">
+          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+          <p className="text-sm font-semibold text-green-800 dark:text-green-200 flex-1">
+            {postedCount} recurring transaction{postedCount > 1 ? "s" : ""} posted successfully
+          </p>
+          <button
+            onClick={() => setPostedCount(0)}
+            className="text-green-400 hover:text-green-600 flex-shrink-0"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}

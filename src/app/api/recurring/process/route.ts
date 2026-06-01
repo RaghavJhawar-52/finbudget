@@ -38,38 +38,38 @@ function advanceDate(date: Date, interval: string): Date {
   return d;
 }
 
-// POST /api/recurring/process
-// Scans all recurring transactions for the user and auto-creates any that are due
-// but haven't been posted yet. Safe to call on every dashboard load — idempotent.
-export async function POST() {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+type DueTransaction = {
+  description: string;
+  amount: number;
+  date: string;
+  type: string;
+  categoryId: string | null;
+  recurringInterval: string;
+  notes: string | null;
+};
 
-  const userId = session.user.id;
-
+/** Compute which recurring transactions are due but not yet posted (shared by GET and POST). */
+async function computeDue(userId: string): Promise<DueTransaction[]> {
   const recurringTxns = await prisma.transaction.findMany({
     where: { userId, isRecurring: true },
     orderBy: { date: "desc" },
   });
 
-  if (recurringTxns.length === 0) {
-    return NextResponse.json({ created: 0, transactions: [] });
-  }
+  if (recurringTxns.length === 0) return [];
 
   // Group by series key, keeping the most recent date per series
   const seriesMap = new Map<string, typeof recurringTxns[0]>();
   for (const txn of recurringTxns) {
     const key = `${txn.description.toLowerCase().trim()}|${txn.categoryId ?? ""}|${txn.type}`;
     if (!seriesMap.has(key)) {
-      seriesMap.set(key, txn); // already sorted desc — first = most recent
+      seriesMap.set(key, txn);
     }
   }
 
-  // End of today
   const todayEnd = new Date();
   todayEnd.setHours(23, 59, 59, 999);
 
-  const created: Array<{ description: string; amount: number; date: string; type: string }> = [];
+  const due: DueTransaction[] = [];
 
   for (const head of Array.from(seriesMap.values())) {
     if (!head.recurringInterval) continue;
@@ -80,7 +80,6 @@ export async function POST() {
     while (nextDue <= todayEnd && safety < 24) {
       safety++;
 
-      // Deduplicate: don't create if a matching transaction already exists that day
       const dayStart = new Date(nextDue); dayStart.setHours(0, 0, 0, 0);
       const dayEnd   = new Date(nextDue); dayEnd.setHours(23, 59, 59, 999);
 
@@ -94,29 +93,70 @@ export async function POST() {
       });
 
       if (!exists) {
-        const newTxn = await prisma.transaction.create({
-          data: {
-            amount: head.amount,
-            description: head.description,
-            type: head.type,
-            categoryId: head.categoryId,
-            date: new Date(nextDue),
-            isRecurring: true,
-            recurringInterval: head.recurringInterval,
-            notes: head.notes ? `Auto-posted (recurring) — ${head.notes}` : "Auto-posted (recurring)",
-            userId,
-          },
-        });
-        created.push({
-          description: newTxn.description,
-          amount: newTxn.amount,
-          date: newTxn.date.toISOString(),
-          type: newTxn.type,
+        due.push({
+          description: head.description,
+          amount: head.amount,
+          date: new Date(nextDue).toISOString(),
+          type: head.type,
+          categoryId: head.categoryId,
+          recurringInterval: head.recurringInterval,
+          notes: head.notes,
         });
       }
 
       nextDue = advanceDate(new Date(nextDue), head.recurringInterval);
     }
+  }
+
+  return due;
+}
+
+// GET /api/recurring/process
+// Dry-run: returns which recurring transactions are due but NOT yet posted.
+// Does not create anything. Used to prompt the user before they decide to post.
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const due = await computeDue(session.user.id);
+  return NextResponse.json({ due: due.length, transactions: due });
+}
+
+// POST /api/recurring/process
+// Manually triggered by the user: creates all due recurring transactions.
+export async function POST() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const userId = session.user.id;
+  const due = await computeDue(userId);
+
+  if (due.length === 0) {
+    return NextResponse.json({ created: 0, transactions: [] });
+  }
+
+  const created: Array<{ description: string; amount: number; date: string; type: string }> = [];
+
+  for (const item of due) {
+    const newTxn = await prisma.transaction.create({
+      data: {
+        amount: item.amount,
+        description: item.description,
+        type: item.type as "INCOME" | "EXPENSE",
+        categoryId: item.categoryId,
+        date: new Date(item.date),
+        isRecurring: true,
+        recurringInterval: item.recurringInterval,
+        notes: item.notes ? `${item.notes}` : null,
+        userId,
+      },
+    });
+    created.push({
+      description: newTxn.description,
+      amount: newTxn.amount,
+      date: newTxn.date.toISOString(),
+      type: newTxn.type,
+    });
   }
 
   return NextResponse.json({ created: created.length, transactions: created });

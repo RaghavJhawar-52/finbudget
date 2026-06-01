@@ -45,26 +45,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Auto-process recurring transactions on every dashboard visit ─────────
-  useEffect(() => {
-    if (pathname !== "/dashboard") return;
-
-    fetch("/api/recurring/process", { method: "POST" })
-      .then(r => r.json())
-      .then(data => {
-        if (data.created > 0) {
-          // Store result so dashboard page can show the banner after re-render
-          sessionStorage.setItem("recurring_posted", JSON.stringify(data));
-          toast(
-            `🔄 ${data.created} recurring transaction${data.created > 1 ? "s" : ""} auto-posted`,
-            "info"
-          );
-        }
-      })
-      .catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
   const handleOnboardingComplete = () => {
     localStorage.setItem("onboarding_complete", "1");
     setShowOnboarding(false);
